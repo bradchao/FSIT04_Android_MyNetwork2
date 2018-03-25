@@ -20,21 +20,29 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.util.List;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
     private ImageView img;
     private UIHandler handler;
     private File donloadPath, sdroot;
     private ProgressDialog progressDialog;
+    private EditText editAccount, editPasswd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +75,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void init(){
         sdroot = Environment.getExternalStorageDirectory();
+
+        editAccount = findViewById(R.id.account);
+        editPasswd = findViewById(R.id.passwd);
 
         File approot = new File(sdroot, "/Android/data/" + getPackageName());
         if (!approot.exists()){
@@ -137,6 +148,53 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+    public void test5(View view) {
+        new Thread(){
+            @Override
+            public void run() {
+                //postURL();
+                getOpendata();
+            }
+        }.start();
+    }
+
+    private void postURL(){
+        try {
+            MultipartUtility mu = new MultipartUtility(
+                    "http://www.bradchao.com/iii/brad02.php", "",
+                    "UTF-8"
+            );
+            mu.addFormField("account", editAccount.getText().toString());
+            mu.addFormField("passwd", editPasswd.getText().toString());
+            List<String> ret= mu.finish();
+            for (String line : ret){
+                Log.v("brad", line);
+            }
+        }catch(Exception e){
+            Log.v("brad", e.toString());
+        }
+    }
+
+
+    private void getOpendata(){
+        try{
+            MultipartUtility mu =
+                    new MultipartUtility("http://data.coa.gov.tw/Service/OpenData/ODwsv/ODwsvTravelFood.aspx",
+                            "", "UTF-8");
+            List<String> ret = mu.finish();
+            for (String line : ret){
+                Log.v("brad", line);
+            }
+
+        }catch (Exception e){
+
+        }
+    }
+
+
+
+
 
     private class UIHandler extends Handler {
         @Override
@@ -241,15 +299,54 @@ public class MainActivity extends AppCompatActivity {
             conn.setDoOutput(true);
 
             ContentValues data = new ContentValues();
-            data.put("account", "test1");
-            data.put("passwd", "test2");
-            
+            data.put("account", editAccount.getText().toString());
+            data.put("passwd", editPasswd.getText().toString());
+            String qs = queryString(data);
 
+            OutputStream out = conn.getOutputStream();
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
+            writer.write(qs);
+            writer.flush();
+            writer.close();
+
+            conn.connect();
+            int rcode = conn.getResponseCode();
+            String mesg = conn.getResponseMessage();
+            Log.v("brad", rcode + ":" + mesg);
+
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream()));
+            String line = null;
+            while ( (line = reader.readLine()) != null){
+                Log.v("brad", line);
+            }
 
 
         } catch (Exception e) {
-
+            Log.v("brad", e.toString());
         }
     }
+
+
+    private String queryString(ContentValues data){
+        StringBuffer sb = new StringBuffer();
+        Set<String> keys = data.keySet();
+
+        try {
+            for (String key : keys) {
+                sb.append(URLEncoder.encode(key, "UTF-8"));
+                sb.append("=");
+                sb.append(URLEncoder.encode(data.getAsString(key), "UTF-8"));
+                sb.append("&");
+            }
+            sb.deleteCharAt(sb.length()-1);
+            return sb.toString();
+        }catch (Exception e){
+            return  null;
+        }
+
+
+    }
+
 
 }

@@ -34,7 +34,12 @@
         android:onClick="test4"
         android:text="test4"
         />
-
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="test5"
+        android:text="test5"
+        />
     <TextView
         android:id="@+id/tv"
         android:layout_width="wrap_content"
