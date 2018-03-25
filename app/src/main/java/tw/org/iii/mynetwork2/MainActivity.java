@@ -2,15 +2,20 @@ package tw.org.iii.mynetwork2;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
+import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -28,7 +33,7 @@ import java.net.URL;
 public class MainActivity extends AppCompatActivity {
     private ImageView img;
     private UIHandler handler;
-    private File donloadPath;
+    private File donloadPath, sdroot;
     private ProgressDialog progressDialog;
 
     @Override
@@ -61,6 +66,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init(){
+        sdroot = Environment.getExternalStorageDirectory();
+
+        File approot = new File(sdroot, "/Android/data/" + getPackageName());
+        if (!approot.exists()){
+            approot.mkdirs();
+        }
+
+
         img = findViewById(R.id.img);
         handler = new UIHandler();
 
@@ -161,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
             conn.connect();
 
             FileOutputStream outFile = new FileOutputStream(
-                    donloadPath.getAbsolutePath() + "/brad.pdf");
+                    sdroot.getAbsolutePath() + "/Android/data/" + getPackageName() + "/brad.pdf");
             BufferedInputStream bin = new BufferedInputStream(conn.getInputStream());
             byte[] buf = new byte[4096]; int len = 0;
             while ( (len = bin.read(buf)) != -1){
@@ -170,6 +183,35 @@ public class MainActivity extends AppCompatActivity {
             outFile.flush();
             outFile.close();
             handler.sendEmptyMessage(2);
+
+
+            File pdffile = new File(donloadPath.getAbsolutePath() + "/brad.pdf");
+
+            if (pdffile.exists()) {
+
+                Intent intent2 = new Intent(Intent.ACTION_VIEW);
+                intent2.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                Uri contentUri = FileProvider.getUriForFile(MainActivity.this,
+                        BuildConfig.APPLICATION_ID + ".fileProvider", pdffile);
+                intent2.setDataAndType(contentUri, "application/vnd.android.package-archive");
+                startActivity(intent2);
+
+//                Intent target = new Intent(Intent.ACTION_VIEW);
+//                target.setDataAndType(Uri.fromFile(pdffile), "application/pdf");
+//                target.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+//
+//                Intent intent = Intent.createChooser(target, "Open File");
+//                try {
+//                    startActivity(intent);
+//                } catch (ActivityNotFoundException e) {
+//                    // Instruct the user to install a PDF reader here, or something
+//                    Log.v("brad", "pdf reader not found");
+//                }
+            }else{
+                Log.v("brad", "pdf not found");
+            }
+
+
         }catch (Exception e){
             Log.v("brad", e.toString());
         }
@@ -180,5 +222,34 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void test4(View view) {
+        new Thread(){
+            @Override
+            public void run() {
+                checkAccount();
+            }
+        }.start();
+
     }
+
+    private void checkAccount() {
+        try {
+            URL url = new URL("http://www.bradchao.com/iii/brad02.php");
+            HttpURLConnection conn =
+                    (HttpURLConnection)url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+
+            ContentValues data = new ContentValues();
+            data.put("account", "test1");
+            data.put("passwd", "test2");
+            
+
+
+
+        } catch (Exception e) {
+
+        }
+    }
+
 }
