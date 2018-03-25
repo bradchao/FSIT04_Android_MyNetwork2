@@ -23,6 +23,9 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.nbsp.materialfilepicker.MaterialFilePicker;
+import com.nbsp.materialfilepicker.ui.FilePickerActivity;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -36,6 +39,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
     private ImageView img;
@@ -193,27 +197,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void test6(View view) {
-        new Thread(){
-            @Override
-            public void run() {
-                try{
-                    File upload =
-                            new File(sdroot.getAbsolutePath() + "/Android/data/" + getPackageName() + "/brad.pdf");
-                    MultipartUtility mu =
-                            new MultipartUtility(
-                                    "http://www.bradchao.com/iii/brad03.php","","UTF-8");
-                    mu.addFilePart("upload", upload);
-                    mu.finish();
-                    Log.v("brad", "Upload OK");
-                }catch(Exception e){
-                    Log.v("brad", e.toString());
-                }
-            }
-        }.start();
+        new MaterialFilePicker()
+                .withActivity(this)
+                .withRequestCode(1)
+                .withHiddenFiles(true)
+                .withTitle("Sample title")
+                .start();
+
+
+//        new Thread(){
+//            @Override
+//            public void run() {
+//                try{
+//                    File upload =
+//                            new File(sdroot.getAbsolutePath() + "/Android/data/" + getPackageName() + "/brad.pdf");
+//                    MultipartUtility mu =
+//                            new MultipartUtility(
+//                                    "http://www.bradchao.com/iii/brad03.php","","UTF-8");
+//                    mu.addFilePart("upload", upload);
+//                    mu.finish();
+//                    Log.v("brad", "Upload OK");
+//                }catch(Exception e){
+//                    Log.v("brad", e.toString());
+//                }
+//            }
+//        }.start();
 
 
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
+        Log.v("brad", filePath);
+    }
 
     private class UIHandler extends Handler {
         @Override
