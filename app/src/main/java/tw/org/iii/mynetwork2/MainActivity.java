@@ -192,8 +192,27 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void test6(View view) {
+        new Thread(){
+            @Override
+            public void run() {
+                try{
+                    File upload =
+                            new File(sdroot.getAbsolutePath() + "/Android/data/" + getPackageName() + "/brad.pdf");
+                    MultipartUtility mu =
+                            new MultipartUtility(
+                                    "http://www.bradchao.com/iii/brad03.php","","UTF-8");
+                    mu.addFilePart("upload", upload);
+                    mu.finish();
+                    Log.v("brad", "Upload OK");
+                }catch(Exception e){
+                    Log.v("brad", e.toString());
+                }
+            }
+        }.start();
 
 
+    }
 
 
     private class UIHandler extends Handler {
